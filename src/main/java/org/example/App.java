@@ -1,5 +1,7 @@
 package org.example;
 
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.stream.IntStream;
@@ -54,15 +56,12 @@ public class App {
         double[][] result = new double[n][m];
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < m; ++j) {
-                double count = 0.0;
+                result[i][j] = 0.0;
                 for (int k = 0; k < common; ++k) {
-                    count += (A[i][k] * B[k][j]);
+                    result[i][j] += (A[i][k] * B[k][j]);
                 }
-                result[i][j] = count;
             }
         }
-
-        System.out.println("MM: n=" + result.length + " m=" + result[0].length);
         return result;
     }
 
@@ -71,18 +70,12 @@ public class App {
         int n = A.length;
         int m = A[0].length;
 
-        System.out.println("n=" + A.length + " m=" + A[0].length);
-        System.out.println("n=" + B.length + " m=" + B[0].length);
-
-
         double[][] result = new double[n][m];
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < m; ++j) {
                 result[i][j] = A[i][j] + B[i][j];
             }
         }
-
-        System.out.println("sum: n=" + result.length + " m=" + result[0].length);
         return result;
     }
 
@@ -96,7 +89,6 @@ public class App {
                 result[i][j] = A[i][j] * number;
             }
         }
-        System.out.println("MbN: n=" + result.length + " m=" + result[0].length);
         return result;
     }
 
@@ -122,6 +114,11 @@ public class App {
     }
 
     public static void main(String[] args) {
+
+        // TODO read/write to files
+
+        long start = System.currentTimeMillis();
+
         int n = 100;
 
         double[][] B = generate(1, n);
@@ -132,6 +129,10 @@ public class App {
         double[][] MC = generate(n, n);
         double[][] MD = generate(n, n);
         double[][] MX = generate(n, n);
+
+        // TODO create different tasks and put them to thread
+
+        // FIXME where we can use Synchronized, can't we???
 
         double[][] minValue = min(MC);
         double[][] E = sum(multiplyMatrices(B, MC), multiplyByNumber(D, minValue));
@@ -145,8 +146,12 @@ public class App {
                         b
                 )
         );
+
+        long end = System.currentTimeMillis();
+
         print("E=", E);
         print("MA=", MA);
+        System.out.println("Time: " + (end - start) + " ms");
     }
 
     private static void print(String message, double[][] result) {
@@ -155,6 +160,35 @@ public class App {
         for (double[] doubles : result) {
             Arrays.stream(doubles).mapToObj(aDouble -> aDouble + " ").forEach(System.out::print);
             System.out.println();
+        }
+    }
+
+    class MultiplyTask implements Runnable {
+
+        double[][] A;
+        double[][] B;
+        double[][] result;
+        int start;
+        int numberOfRows;
+
+        public MultiplyTask(double[][] A, double[][] B, double[][] result, int start, int numberOfRows) {
+            this.A = A;
+            this.B = B;
+            this.result = result;
+            this.start = start;
+            this.numberOfRows = numberOfRows;
+        }
+
+        @Override
+        public void run() {
+            int columns = A[0].length;
+            for (int i = 0; i < Math.min(start + numberOfRows, columns); ++ i) {
+                for (int j = 0; j < columns; ++ j) {
+                    result[i][j] = 0;
+                    for(int k = 0; k < columns; ++ k)
+                        result[i][j] += A[i][k] * B[k][j];
+                }
+            }
         }
     }
 
