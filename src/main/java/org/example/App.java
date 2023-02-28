@@ -45,37 +45,68 @@ public class App {
         return result;
     }
 
-    private static double[][] multiply(double[][] A, double[][] B) {
-        assert A.length != A[0].length;
+    // FIXME improve with Runnable
+    private static double[][] multiplyMatrices(double[][] A, double[][] B) {
         int n = A.length;
-        double[][] result = new double[n][n];
+        int m = B[0].length;
+        int common = B.length;
+
+        double[][] result = new double[n][m];
         for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < n; ++j) {
-                // todo something
+            for (int j = 0; j < m; ++j) {
+                double count = 0.0;
+                for (int k = 0; k < common; ++k) {
+                    count += (A[i][k] * B[k][j]);
+                }
+                result[i][j] = count;
             }
         }
+
+        System.out.println("MM: n=" + result.length + " m=" + result[0].length);
         return result;
     }
 
+    // TODO improve with Runnable
     private static double[][] sum(double[][] A, double[][] B) {
-        assert A.length != A[0].length;
         int n = A.length;
-        double[][] result = new double[n][n];
+        int m = A[0].length;
+
+        System.out.println("n=" + A.length + " m=" + A[0].length);
+        System.out.println("n=" + B.length + " m=" + B[0].length);
+
+
+        double[][] result = new double[n][m];
         for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < n; ++j) {
-                // todo something
+            for (int j = 0; j < m; ++j) {
+                result[i][j] = A[i][j] + B[i][j];
             }
         }
+
+        System.out.println("sum: n=" + result.length + " m=" + result[0].length);
+        return result;
+    }
+
+    private static double[][] multiplyByNumber(double[][] A, double[][] B) {
+        double number = B[0][0];
+        int n = A.length;
+        int m = A[0].length;
+        double[][] result = new double[n][m];
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                result[i][j] = A[i][j] * number;
+            }
+        }
+        System.out.println("MbN: n=" + result.length + " m=" + result[0].length);
         return result;
     }
 
     private static double[][] diff(double[][] A, double[][] B) {
-        assert A.length != A[0].length;
         int n = A.length;
-        double[][] result = new double[n][n];
+        int m = A[0].length;
+        double[][] result = new double[n][m];
         for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < n; ++j) {
-                // todo something
+            for (int j = 0; j < m; ++j) {
+                result[i][j] = A[i][j] - B[i][j];
             }
         }
         return result;
@@ -103,14 +134,14 @@ public class App {
         double[][] MX = generate(n, n);
 
         double[][] minValue = min(MC);
-        double[][] E = sum(multiply(B, MC), multiply(D, minValue));
+        double[][] E = sum(multiplyMatrices(B, MC), multiplyByNumber(D, minValue));
         double[][] MA = sum(
-                multiply(
-                        multiply(b, MD),
+                multiplyMatrices(
+                        multiplyByNumber(MD, b),
                         diff(MC, MX)
                 ),
-                multiply(
-                        multiply(MX, MC),
+                multiplyByNumber(
+                        multiplyMatrices(MX, MC),
                         b
                 )
         );
@@ -120,6 +151,7 @@ public class App {
 
     private static void print(String message, double[][] result) {
         System.out.println(message);
+        System.out.println("n=" + result.length + " m=" + result[0].length);
         for (double[] doubles : result) {
             Arrays.stream(doubles).mapToObj(aDouble -> aDouble + " ").forEach(System.out::print);
             System.out.println();
