@@ -1,8 +1,12 @@
 package org.example.tasks;
 
+import org.apache.log4j.Logger;
 import org.example.strategies.CalculationStrategy;
 
+
 public class MatrixTask implements Runnable {
+
+    private static final Logger logger = Logger.getLogger(MatrixTask.class);
 
     private final CalculationStrategy strategy;
 
@@ -33,7 +37,7 @@ public class MatrixTask implements Runnable {
                 }
                 row = context.nextRowNumber();
             }
-//            System.out.println(Thread.currentThread().getName() + " is going to process row " + row);
+            logger.info(Thread.currentThread().getName() + " is going to process row " + row);
             this.strategy.calculate(A, B, result, row);
         }
     }

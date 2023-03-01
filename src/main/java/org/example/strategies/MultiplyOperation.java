@@ -9,4 +9,9 @@ public class MultiplyOperation implements CalculationStrategy {
             }
         }
     }
+
+    @Override
+    public String getDescription() {
+        return "matrix multiplication";
+    }
 }

@@ -8,4 +8,9 @@ public class SumOperation implements CalculationStrategy {
             result[row][i] = A[row][i] + B[row][i];
         }
     }
+
+    @Override
+    public String getDescription() {
+        return "finding sum between matrices' cells";
+    }
 }

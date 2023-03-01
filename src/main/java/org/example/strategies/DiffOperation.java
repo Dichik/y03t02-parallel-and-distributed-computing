@@ -8,4 +8,9 @@ public class DiffOperation implements CalculationStrategy {
             result[row][i] = A[row][i] - B[row][i];
         }
     }
+
+    @Override
+    public String getDescription() {
+        return "finding difference between cells";
+    }
 }

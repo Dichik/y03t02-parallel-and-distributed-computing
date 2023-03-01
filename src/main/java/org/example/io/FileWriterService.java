@@ -1,5 +1,8 @@
 package org.example.io;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -9,8 +12,9 @@ import java.util.stream.IntStream;
 
 public class FileWriterService {
 
-    public FileWriterService() {
+    private static final Logger logger = LogManager.getLogger(FileWriterService.class);
 
+    public FileWriterService() {
     }
 
     public void save(String filename, double[][] values) throws IOException {
@@ -18,6 +22,7 @@ public class FileWriterService {
         File file = new File(path);
         if (!file.exists() || file.isDirectory()) {
             saveToFile(file, values);
+            logger.info("Saved data to " + path + " successfully.");
         }
     }
 

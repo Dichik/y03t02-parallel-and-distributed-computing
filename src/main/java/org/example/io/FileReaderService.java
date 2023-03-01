@@ -1,5 +1,8 @@
 package org.example.io;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Random;
@@ -7,6 +10,7 @@ import java.util.Scanner;
 
 public class FileReaderService {
 
+    private static final Logger logger = LogManager.getLogger(FileReaderService.class);
     private static final Random random = new Random();
 
     public FileReaderService() {
@@ -29,8 +33,10 @@ public class FileReaderService {
         double[][] result;
         if (file.exists() && !file.isDirectory()) {
             result = readFile(file, n, m);
+            logger.info("Read data from " + path + " successfully.");
         } else {
             result = generate(n, m);
+            logger.info("Generated data for " + path + " successfully.");
         }
         return result;
     }

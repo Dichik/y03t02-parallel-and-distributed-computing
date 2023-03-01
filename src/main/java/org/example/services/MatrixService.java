@@ -1,11 +1,15 @@
 package org.example.services;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.example.strategies.CalculationStrategy;
 import org.example.tasks.MatrixTask;
 
 import java.util.stream.IntStream;
 
 public class MatrixService {
+
+    private static final Logger logger = LogManager.getLogger(MatrixService.class);
 
     public MatrixService() {
     }
@@ -30,10 +34,10 @@ public class MatrixService {
             try {
                 worker.join();
             } catch (InterruptedException ex) {
-
+                logger.error("Couldn't join workers, see: " + ex);
             }
         }
-
+        logger.info(strategy.getDescription() + " was processed successfully.");
         return result;
     }
 
@@ -48,6 +52,7 @@ public class MatrixService {
                 result[i][j] = A[i][j] * number;
             }
         }
+        logger.info("Matrix multiplication with a number was processed successfully.");
         return result;
     }
 
@@ -57,6 +62,7 @@ public class MatrixService {
         for (double[] doubles : A) {
             IntStream.range(0, n).forEach(j -> result[0][0] = Math.min(result[0][0], doubles[j]));
         }
+        logger.info("Finding min value in Matrix was processed successfully.");
         return result;
     }
 
