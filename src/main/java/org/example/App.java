@@ -1,5 +1,7 @@
 package org.example;
 
+import org.example.io.FileReaderService;
+import org.example.io.FileWriterService;
 import org.example.strategies.DiffOperation;
 import org.example.strategies.SumOperation;
 import org.example.tasks.MatrixTask;
@@ -42,18 +44,6 @@ public class App {
      * Matrices: MC, MD, MX (nxn)
      */
 
-    private static final Random random = new Random();
-
-    private static double[][] generate(int rows, int columns) {
-        double[][] result = new double[rows][columns];
-        for (int i = 0; i < rows; ++i) {
-            for (int j = 0; j < columns; ++j) {
-                result[i][j] = random.nextFloat(100);
-            }
-        }
-        return result;
-    }
-
     private static double[][] multiplyByNumber(double[][] A, double[][] B) {
         double number = B[0][0];
         int n = A.length;
@@ -76,65 +66,19 @@ public class App {
         return result;
     }
 
-    private static double[][] getValues(String filename, int n, int m) throws FileNotFoundException {
-        String path = "./data/" + filename + ".txt";
-        File file = new File(path);
-        double[][] result;
-        if (file.exists() && !file.isDirectory()) {
-            result = readFile(file, n, m);
-        } else {
-            result = generate(n, m);
-        }
-        return result;
-    }
-
-    private static void saveValues(String filename, double[][] values) throws IOException {
-        String path = "./data/" + filename + ".txt";
-        File file = new File(path);
-        if (!file.exists() || file.isDirectory()) {
-            saveToFile(file, values);
-        }
-    }
-
-    private static void saveToFile(File file, double[][] values) throws IOException {
-        file.getParentFile().mkdirs();
-        file.createNewFile();
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        for (double[] value : values) {
-            String sb = IntStream.range(0, values[0].length)
-                    .mapToObj(j -> value[j] + " ")
-                    .collect(Collectors.joining());
-            writer.write(sb + "\n");
-        }
-        writer.close();
-    }
-
-    private static double[][] readFile(File file, int n, int m) throws FileNotFoundException {
-        double[][] result = new double[n][m];
-        Scanner scanner = new Scanner(file);
-        int i = 0;
-        while(scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            String[] numbers = line.trim().split(" ");
-            for (int j = 0; j < numbers.length; ++ j) {
-                result[i][j] = Double.parseDouble(numbers[j]);
-            }
-            i++;
-        }
-        return result;
-    }
-
     public static void main(String[] args) throws IOException {
         int n = 100;
 
-        double[][] B = getValues("B", 1, n);
-        double[][] D = getValues("D", 1, n);
+        FileReaderService fileReaderService = new FileReaderService();
 
-        double[][] b = getValues("b_", 1, 1);
+        double[][] B = fileReaderService.getValues("B", 1, n);
+        double[][] D = fileReaderService.getValues("D", 1, n);
 
-        double[][] MC = getValues("MC", n, n);
-        double[][] MD = getValues("MD", n, n);
-        double[][] MX = getValues("MX", n, n);
+        double[][] b = fileReaderService.getValues("b_", 1, 1);
+
+        double[][] MC = fileReaderService.getValues("MC", n, n);
+        double[][] MD = fileReaderService.getValues("MD", n, n);
+        double[][] MX = fileReaderService.getValues("MX", n, n);
 
         double[][] minValue = min(MC);
 
@@ -168,12 +112,13 @@ public class App {
         print("MA=", MA);
         System.out.println("Time: " + (end - start) + " ms");
 
-        saveValues("B", B);
-        saveValues("D", D);
-        saveValues("b_", b);
-        saveValues("MC", MC);
-        saveValues("MD", MD);
-        saveValues("MX", MX);
+        FileWriterService fileWriterService = new FileWriterService();
+        fileWriterService.save("B", B);
+        fileWriterService.save("D", D);
+        fileWriterService.save("b_", b);
+        fileWriterService.save("MC", MC);
+        fileWriterService.save("MD", MD);
+        fileWriterService.save("MX", MX);
     }
 
     private static void print(String message, double[][] result) {
@@ -185,7 +130,6 @@ public class App {
         }
     }
 
-    // FIXME improve with Runnable
     private static double[][] processMatrices(double[][] A, double[][] B, CalculationStrategy strategy) {
         int n = A.length;
         int m = B[0].length;
