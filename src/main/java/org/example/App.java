@@ -1,7 +1,11 @@
 package org.example;
 
-import java.sql.Time;
-import java.sql.Timestamp;
+import org.example.strategies.DiffOperation;
+import org.example.strategies.SumOperation;
+import org.example.tasks.MatrixTask;
+import org.example.strategies.CalculationStrategy;
+import org.example.strategies.MultiplyOperation;
+
 import java.util.Arrays;
 import java.util.Random;
 import java.util.stream.IntStream;
@@ -47,38 +51,6 @@ public class App {
         return result;
     }
 
-    // FIXME improve with Runnable
-    private static double[][] multiplyMatrices(double[][] A, double[][] B) {
-        int n = A.length;
-        int m = B[0].length;
-        int common = B.length;
-
-        double[][] result = new double[n][m];
-        for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < m; ++j) {
-                result[i][j] = 0.0;
-                for (int k = 0; k < common; ++k) {
-                    result[i][j] += (A[i][k] * B[k][j]);
-                }
-            }
-        }
-        return result;
-    }
-
-    // TODO improve with Runnable
-    private static double[][] sum(double[][] A, double[][] B) {
-        int n = A.length;
-        int m = A[0].length;
-
-        double[][] result = new double[n][m];
-        for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < m; ++j) {
-                result[i][j] = A[i][j] + B[i][j];
-            }
-        }
-        return result;
-    }
-
     private static double[][] multiplyByNumber(double[][] A, double[][] B) {
         double number = B[0][0];
         int n = A.length;
@@ -87,18 +59,6 @@ public class App {
         for (int i = 0; i < n; ++i) {
             for (int j = 0; j < m; ++j) {
                 result[i][j] = A[i][j] * number;
-            }
-        }
-        return result;
-    }
-
-    private static double[][] diff(double[][] A, double[][] B) {
-        int n = A.length;
-        int m = A[0].length;
-        double[][] result = new double[n][m];
-        for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < m; ++j) {
-                result[i][j] = A[i][j] - B[i][j];
             }
         }
         return result;
@@ -135,16 +95,27 @@ public class App {
         // FIXME where we can use Synchronized, can't we???
 
         double[][] minValue = min(MC);
-        double[][] E = sum(multiplyMatrices(B, MC), multiplyByNumber(D, minValue));
-        double[][] MA = sum(
-                multiplyMatrices(
+
+        CalculationStrategy multiplication = new MultiplyOperation();
+        CalculationStrategy sum = new SumOperation();
+        CalculationStrategy difference = new DiffOperation();
+
+        double[][] E = processMatrices(
+                processMatrices(B, MC, multiplication),
+                multiplyByNumber(D, minValue),
+                sum
+        );
+        double[][] MA = processMatrices(
+                processMatrices(
                         multiplyByNumber(MD, b),
-                        diff(MC, MX)
+                        processMatrices(MC, MX, difference),
+                        multiplication
                 ),
                 multiplyByNumber(
-                        multiplyMatrices(MX, MC),
+                        processMatrices(MX, MC, multiplication),
                         b
-                )
+                ),
+                sum
         );
 
         long end = System.currentTimeMillis();
@@ -163,33 +134,32 @@ public class App {
         }
     }
 
-    class MultiplyTask implements Runnable {
+    // FIXME improve with Runnable
+    private static double[][] processMatrices(double[][] A, double[][] B, CalculationStrategy strategy) {
+        int n = A.length;
+        int m = B[0].length;
 
-        double[][] A;
-        double[][] B;
-        double[][] result;
-        int start;
-        int numberOfRows;
+        double[][] result = new double[n][m];
 
-        public MultiplyTask(double[][] A, double[][] B, double[][] result, int start, int numberOfRows) {
-            this.A = A;
-            this.B = B;
-            this.result = result;
-            this.start = start;
-            this.numberOfRows = numberOfRows;
+        MatrixTask.ConcurrencyContext context = new MatrixTask.ConcurrencyContext(result.length);
+        Runnable task = new MatrixTask(context, A, B, result, strategy);
+        Thread[] workers = new Thread[5];
+
+        for (int i = 0; i < workers.length; ++ i) {
+            workers[i] = new Thread(task, "worker-" + i);
         }
+        for (Thread worker : workers) {
+            worker.start();
+        }
+        for (Thread worker : workers) {
+            try {
+                worker.join();
+            } catch (InterruptedException ex) {
 
-        @Override
-        public void run() {
-            int columns = A[0].length;
-            for (int i = 0; i < Math.min(start + numberOfRows, columns); ++ i) {
-                for (int j = 0; j < columns; ++ j) {
-                    result[i][j] = 0;
-                    for(int k = 0; k < columns; ++ k)
-                        result[i][j] += A[i][k] * B[k][j];
-                }
             }
         }
+
+        return result;
     }
 
 }
