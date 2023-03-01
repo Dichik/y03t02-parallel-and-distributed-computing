@@ -2,18 +2,14 @@ package org.example;
 
 import org.example.io.FileReaderService;
 import org.example.io.FileWriterService;
-import org.example.strategies.DiffOperation;
-import org.example.strategies.SumOperation;
-import org.example.tasks.MatrixTask;
+import org.example.services.MatrixService;
 import org.example.strategies.CalculationStrategy;
+import org.example.strategies.DiffOperation;
 import org.example.strategies.MultiplyOperation;
+import org.example.strategies.SumOperation;
 
-import java.io.*;
+import java.io.IOException;
 import java.util.Arrays;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Task:
@@ -44,31 +40,10 @@ public class App {
      * Matrices: MC, MD, MX (nxn)
      */
 
-    private static double[][] multiplyByNumber(double[][] A, double[][] B) {
-        double number = B[0][0];
-        int n = A.length;
-        int m = A[0].length;
-        double[][] result = new double[n][m];
-        for (int i = 0; i < n; ++i) {
-            for (int j = 0; j < m; ++j) {
-                result[i][j] = A[i][j] * number;
-            }
-        }
-        return result;
-    }
-
-    private static double[][] min(double[][] A) {
-        int n = A.length;
-        double[][] result = new double[1][1];
-        for (double[] doubles : A) {
-            IntStream.range(0, n).forEach(j -> result[0][0] = Math.min(result[0][0], doubles[j]));
-        }
-        return result;
-    }
-
     public static void main(String[] args) throws IOException {
         int n = 100;
 
+        MatrixService matrixService = new MatrixService();
         FileReaderService fileReaderService = new FileReaderService();
 
         double[][] B = fileReaderService.getValues("B", 1, n);
@@ -80,7 +55,7 @@ public class App {
         double[][] MD = fileReaderService.getValues("MD", n, n);
         double[][] MX = fileReaderService.getValues("MX", n, n);
 
-        double[][] minValue = min(MC);
+        double[][] minValue = matrixService.min(MC);
 
         CalculationStrategy multiplication = new MultiplyOperation();
         CalculationStrategy sum = new SumOperation();
@@ -88,19 +63,19 @@ public class App {
 
         long start = System.currentTimeMillis();
 
-        double[][] E = processMatrices(
-                processMatrices(B, MC, multiplication),
-                multiplyByNumber(D, minValue),
+        double[][] E = matrixService.processMatrices(
+                matrixService.processMatrices(B, MC, multiplication),
+                matrixService.multiplyByNumber(D, minValue),
                 sum
         );
-        double[][] MA = processMatrices(
-                processMatrices(
-                        multiplyByNumber(MD, b),
-                        processMatrices(MC, MX, difference),
+        double[][] MA = matrixService.processMatrices(
+                matrixService.processMatrices(
+                        matrixService.multiplyByNumber(MD, b),
+                        matrixService.processMatrices(MC, MX, difference),
                         multiplication
                 ),
-                multiplyByNumber(
-                        processMatrices(MX, MC, multiplication),
+                matrixService.multiplyByNumber(
+                        matrixService.processMatrices(MX, MC, multiplication),
                         b
                 ),
                 sum
@@ -128,33 +103,6 @@ public class App {
             Arrays.stream(doubles).mapToObj(aDouble -> aDouble + " ").forEach(System.out::print);
             System.out.println();
         }
-    }
-
-    private static double[][] processMatrices(double[][] A, double[][] B, CalculationStrategy strategy) {
-        int n = A.length;
-        int m = B[0].length;
-
-        double[][] result = new double[n][m];
-
-        MatrixTask.ConcurrencyContext context = new MatrixTask.ConcurrencyContext(result.length);
-        Runnable task = new MatrixTask(context, A, B, result, strategy);
-        Thread[] workers = new Thread[5];
-
-        for (int i = 0; i < workers.length; ++ i) {
-            workers[i] = new Thread(task, "worker-" + i);
-        }
-        for (Thread worker : workers) {
-            worker.start();
-        }
-        for (Thread worker : workers) {
-            try {
-                worker.join();
-            } catch (InterruptedException ex) {
-
-            }
-        }
-
-        return result;
     }
 
 }

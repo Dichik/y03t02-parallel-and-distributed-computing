@@ -25,7 +25,7 @@ public class MatrixTask implements Runnable {
 
     @Override
     public void run() {
-        while(true) {
+        while (true) {
             int row;
             synchronized (context) {
                 if (context.isFullyProcessed()) {
