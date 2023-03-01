@@ -6,8 +6,11 @@ import org.example.tasks.MatrixTask;
 import org.example.strategies.CalculationStrategy;
 import org.example.strategies.MultiplyOperation;
 
+import java.io.*;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.Scanner;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -73,32 +76,73 @@ public class App {
         return result;
     }
 
-    public static void main(String[] args) {
+    private static double[][] getValues(String filename, int n, int m) throws FileNotFoundException {
+        String path = "./data/" + filename + ".txt";
+        File file = new File(path);
+        double[][] result;
+        if (file.exists() && !file.isDirectory()) {
+            result = readFile(file, n, m);
+        } else {
+            result = generate(n, m);
+        }
+        return result;
+    }
 
-        // TODO read/write to files
+    private static void saveValues(String filename, double[][] values) throws IOException {
+        String path = "./data/" + filename + ".txt";
+        File file = new File(path);
+        if (!file.exists() || file.isDirectory()) {
+            saveToFile(file, values);
+        }
+    }
 
-        long start = System.currentTimeMillis();
+    private static void saveToFile(File file, double[][] values) throws IOException {
+        file.getParentFile().mkdirs();
+        file.createNewFile();
+        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+        for (double[] value : values) {
+            String sb = IntStream.range(0, values[0].length)
+                    .mapToObj(j -> value[j] + " ")
+                    .collect(Collectors.joining());
+            writer.write(sb + "\n");
+        }
+        writer.close();
+    }
 
+    private static double[][] readFile(File file, int n, int m) throws FileNotFoundException {
+        double[][] result = new double[n][m];
+        Scanner scanner = new Scanner(file);
+        int i = 0;
+        while(scanner.hasNextLine()) {
+            String line = scanner.nextLine();
+            String[] numbers = line.trim().split(" ");
+            for (int j = 0; j < numbers.length; ++ j) {
+                result[i][j] = Double.parseDouble(numbers[j]);
+            }
+            i++;
+        }
+        return result;
+    }
+
+    public static void main(String[] args) throws IOException {
         int n = 100;
 
-        double[][] B = generate(1, n);
-        double[][] D = generate(1, n);
+        double[][] B = getValues("B", 1, n);
+        double[][] D = getValues("D", 1, n);
 
-        double[][] b = generate(1, 1);
+        double[][] b = getValues("b_", 1, 1);
 
-        double[][] MC = generate(n, n);
-        double[][] MD = generate(n, n);
-        double[][] MX = generate(n, n);
-
-        // TODO create different tasks and put them to thread
-
-        // FIXME where we can use Synchronized, can't we???
+        double[][] MC = getValues("MC", n, n);
+        double[][] MD = getValues("MD", n, n);
+        double[][] MX = getValues("MX", n, n);
 
         double[][] minValue = min(MC);
 
         CalculationStrategy multiplication = new MultiplyOperation();
         CalculationStrategy sum = new SumOperation();
         CalculationStrategy difference = new DiffOperation();
+
+        long start = System.currentTimeMillis();
 
         double[][] E = processMatrices(
                 processMatrices(B, MC, multiplication),
@@ -123,6 +167,13 @@ public class App {
         print("E=", E);
         print("MA=", MA);
         System.out.println("Time: " + (end - start) + " ms");
+
+        saveValues("B", B);
+        saveValues("D", D);
+        saveValues("b_", b);
+        saveValues("MC", MC);
+        saveValues("MD", MD);
+        saveValues("MX", MX);
     }
 
     private static void print(String message, double[][] result) {
