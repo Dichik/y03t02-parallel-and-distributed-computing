@@ -5,7 +5,12 @@ import org.apache.log4j.Logger;
 import org.example.strategies.CalculationStrategy;
 import org.example.tasks.MatrixTask;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 public class MatrixService {
@@ -23,22 +28,21 @@ public class MatrixService {
 
         MatrixTask.ConcurrencyContext context = new MatrixTask.ConcurrencyContext(result.length);
         Semaphore semaphore = new Semaphore(1);
-        Runnable task = new MatrixTask(semaphore, context, A, B, result, strategy);
-        Thread[] workers = new Thread[5];
+        int nThreads = 5;
+        ExecutorService executorService = Executors.newFixedThreadPool(nThreads);
 
-        for (int i = 0; i < workers.length; ++i) {
-            workers[i] = new Thread(task, "worker-" + i);
+        for (int i = 0; i < nThreads; ++i) {
+            Runnable task = new MatrixTask(semaphore, context, A, B, result, strategy);
+            executorService.execute(task);
         }
-        for (Thread worker : workers) {
-            worker.start();
+        executorService.shutdown();
+
+        try {
+            executorService.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        for (Thread worker : workers) {
-            try {
-                worker.join();
-            } catch (InterruptedException ex) {
-                logger.error("Couldn't join workers, see: " + ex);
-            }
-        }
+
         logger.info(strategy.getDescription() + " was processed successfully.");
         return result;
     }
