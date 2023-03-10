@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import org.example.strategies.CalculationStrategy;
 import org.example.tasks.MatrixTask;
 
+import java.util.concurrent.Semaphore;
 import java.util.stream.IntStream;
 
 public class MatrixService {
@@ -21,7 +22,8 @@ public class MatrixService {
         double[][] result = new double[n][m];
 
         MatrixTask.ConcurrencyContext context = new MatrixTask.ConcurrencyContext(result.length);
-        Runnable task = new MatrixTask(context, A, B, result, strategy);
+        Semaphore semaphore = new Semaphore(1);
+        Runnable task = new MatrixTask(semaphore, context, A, B, result, strategy);
         Thread[] workers = new Thread[5];
 
         for (int i = 0; i < workers.length; ++i) {

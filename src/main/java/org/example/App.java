@@ -94,8 +94,8 @@ public class App {
         fileWriterService.save("MC", MC);
         fileWriterService.save("MD", MD);
         fileWriterService.save("MX", MX);
-        fileWriterService.save("E", MX, true);
-        fileWriterService.save("MA", MX, true);
+        fileWriterService.save("E", E, true);
+        fileWriterService.save("MA", MA, true);
     }
 
     private static void print(String message, double[][] result) {
