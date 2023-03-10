@@ -18,9 +18,13 @@ public class FileWriterService {
     }
 
     public void save(String filename, double[][] values) throws IOException {
+        save(filename, values, false);
+    }
+
+    public void save(String filename, double[][] values, boolean rewriteData) throws IOException {
         String path = "./data/" + filename + ".txt";
         File file = new File(path);
-        if (!file.exists() || file.isDirectory()) {
+        if (rewriteData || !file.exists() || file.isDirectory()) {
             saveToFile(file, values);
             logger.info("Saved data to " + path + " successfully.");
         }

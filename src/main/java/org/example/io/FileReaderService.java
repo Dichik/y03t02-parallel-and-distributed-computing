@@ -21,7 +21,7 @@ public class FileReaderService {
         double[][] result = new double[rows][columns];
         for (int i = 0; i < rows; ++i) {
             for (int j = 0; j < columns; ++j) {
-                result[i][j] = random.nextFloat(100);
+                result[i][j] = 100 * random.nextDouble();
             }
         }
         return result;
